@@ -157,6 +157,7 @@ export default defineSchema({
     conversationId: v.string(),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
+    isStreaming: v.optional(v.boolean()),
   })
     .index("by_user_conversationId", ["userId", "conversationId"]),
 
