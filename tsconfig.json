@@ -3,15 +3,18 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@convex/_generated/*": ["./convex/_generated/*"],
+      "@medtrack/types": ["./src/types/index.ts"],
+      "@medtrack/ui": ["./src/ui/index.ts"],
+      "@medtrack/utils": ["./src/utils/index.ts"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ]
 }
