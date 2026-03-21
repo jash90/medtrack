@@ -1,57 +1,75 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import "../global.css";
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
+import { Slot, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+import { ConvexReactClient, useConvexAuth } from "convex/react";
+import { secureStorage } from "@/lib/convex-auth-storage";
+import { OcrResultProvider } from "@/lib/ocr-result-context";
+import { View, ActivityIndicator } from "react-native";
 
-import { useColorScheme } from '@/components/useColorScheme';
+export { ErrorBoundary } from "expo-router";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const convex = new ConvexReactClient(
+  process.env.EXPO_PUBLIC_CONVEX_URL!,
+  { unsavedChangesWarning: false }
+);
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  if (!loaded) return null;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <ConvexAuthProvider client={convex} storage={secureStorage}>
+      <OcrResultProvider>
+        <AuthGate />
+      </OcrResultProvider>
+    </ConvexAuthProvider>
   );
+}
+
+function AuthGate() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const inShareGroup = segments[0] === "share";
+
+    // Share routes don't require auth
+    if (inShareGroup) return;
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/(auth)/sign-in");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [isAuthenticated, isLoading, segments]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
+
+  return <Slot />;
 }
