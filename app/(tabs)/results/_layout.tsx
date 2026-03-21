@@ -16,6 +16,10 @@ export default function ResultsLayout() {
         name="[id]"
         options={{ title: "Szczegóły wyniku" }}
       />
+      <Stack.Screen
+        name="trend/[name]"
+        options={{ title: "Szczegóły trendu" }}
+      />
     </Stack>
   );
 }

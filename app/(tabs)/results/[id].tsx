@@ -131,7 +131,7 @@ export default function ResultDetailScreen() {
         <View className="mt-6 gap-3">
           <Pressable
             className="bg-primary-600 rounded-xl py-4 items-center"
-            onPress={() => router.push("/(tabs)/results")}
+            onPress={() => router.push({ pathname: "/(tabs)/results", params: { tab: "trends" } })}
           >
             <Text className="text-white font-semibold">
               Zobacz trendy parametrów
